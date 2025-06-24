@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador Interativo NoSQL Detalhado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Tech Blue -->
+    <!-- Application Structure Plan: A single-page dashboard with a sticky top navigation bar for quick scrolling. The structure prioritizes user interaction over linear presentation. Key sections include: 1) An introduction. 2) An interactive module to explore the four main types of NoSQL databases, where clicking a type updates the content dynamically. 3) A side-by-side comparison of advantages and disadvantages. 4) A visual SQL vs. NoSQL showdown, featuring a Chart.js canvas to illustrate the core difference in scalability. 5) A final section on future trends, and 6) A new section for academic and industry references. This non-linear, modular approach was chosen to transform passive reading into active exploration, allowing users to compare concepts and dive into topics of interest in any order, which is more effective for learning and retention than a static slide-by-slide format. -->
+    <!-- Visualization & Content Choices: 1. NoSQL Types: Report Info -> Four types of NoSQL. Goal -> Organize & Inform. Viz/Method -> Interactive tabbed section with HTML/CSS diagrams. Interaction -> Clicking a tab dynamically updates a central content area with details, use cases, and examples. Justification -> Encourages user exploration and focused learning on one type at a time. Library -> Vanilla JS. 2. Scalability Comparison: Report Info -> Vertical vs. Horizontal Scaling. Goal -> Compare. Viz/Method -> Bar Chart. Interaction -> Tooltips on hover provide context on cost/capacity. Justification -> Visually demonstrates an abstract, critical concept far more effectively than text. Library -> Chart.js. 3. Pros/Cons: Report Info -> Advantages/Disadvantages list. Goal -> Compare. Viz/Method -> Two-column card layout. Interaction -> Subtle hover effects for visual feedback. Justification -> Clean, direct comparison of opposing ideas. Library -> CSS Transitions. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F5F2;
+            color: #334155;
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #4338CA;
+            border-bottom-color: #4338CA;
+        }
+        .type-button {
+            transition: all 0.3s ease;
+        }
+        .type-button.active {
+            background-color: #4F46E5;
+            color: #FFFFFF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+        }
+        .content-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-slate-800">NoSQL Explorer</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#intro" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">Introdução</a>
+                        <a href="#types" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">Tipos de NoSQL</a>
+                        <a href="#tradeoffs" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">Vantagens e Desvantagens</a>
+                        <a href="#comparison" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">SQL vs NoSQL</a>
+                        <a href="#future" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">Futuro</a>
+                        <a href="#references" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600">Referências</a>
+                    </div>
+                </div>
+                 <div class="md:hidden">
+                    <select id="mobile-nav" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="#intro">Introdução</option>
+                        <option value="#types">Tipos de NoSQL</option>
+                        <option value="#tradeoffs">Vantagens e Desvantagens</option>
+                        <option value="#comparison">SQL vs NoSQL</option>
+                        <option value="#future">Futuro</option>
+                        <option value="#references">Referências</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        
+        <section id="intro" class="mb-24 text-center">
+            <h2 class="text-base font-semibold text-indigo-600 tracking-wide uppercase">Bem-vindo ao Mundo NoSQL</h2>
+            <p class="mt-2 text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl">Além dos Bancos de Dados Relacionais: Uma Abordagem Detalhada</p>
+            <p class="mt-6 max-w-3xl mx-auto text-xl text-slate-600">
+                Esta aplicação interativa foi cuidadosamente projetada para desmistificar o NoSQL, uma abordagem moderna e flexível para o gerenciamento de dados que se destaca no cenário atual das aplicações em larga escala. Aqui, você não apenas aprenderá por que o NoSQL emergiu como uma alternativa poderosa ao SQL tradicional, mas também mergulhará em seus princípios, explorando a fundo sua flexibilidade, escalabilidade e os diversos modelos de dados que o compõem, com exemplos reais do mercado.
+            </p>
+        </section>
+
+        <section id="types" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Explore em Detalhe os Tipos de Banco de Dados NoSQL</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    O ecossistema NoSQL é vasto e diversificado, composto por diferentes tipos de bancos de dados, cada um meticulosamente otimizado para um conjunto específico de problemas e modelos de interação com os dados. Clique nos botões abaixo para explorar as quatro categorias principais em profundidade, entendendo suas nuances, casos de uso ideais e exemplos de tecnologias amplamente adotadas no mercado.
+                </p>
+            </div>
+            
+            <div class="flex flex-wrap items-center justify-center gap-4 mb-8">
+                <button data-type="key-value" class="type-button active font-semibold py-3 px-6 bg-white rounded-full shadow-md">Chave-Valor</button>
+                <button data-type="document" class="type-button font-semibold py-3 px-6 bg-white rounded-full shadow-md">Documento</button>
+                <button data-type="column-family" class="type-button font-semibold py-3 px-6 bg-white rounded-full shadow-md">Colunar</button>
+                <button data-type="graph" class="type-button font-semibold py-3 px-6 bg-white rounded-full shadow-md">Grafo</button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12 overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 id="type-title" class="text-2xl font-bold text-slate-800 mb-4"></h3>
+                        <p id="type-concept" class="text-slate-600 mb-6"></p>
+                        
+                        <h4 class="font-semibold text-slate-700 mb-2">Características Principais:</h4>
+                        <ul id="type-features" class="list-none space-y-2 mb-6 text-slate-600"></ul>
+
+                        <h4 class="font-semibold text-slate-700 mb-2">Casos de Uso Comuns:</h4>
+                        <p id="type-usecases" class="text-slate-600 mb-6"></p>
+
+                        <h4 class="font-semibold text-slate-700 mb-2">Exemplos Populares e Onde são Usados:</h4>
+                        <p id="type-examples" class="font-mono text-indigo-600"></p>
+                    </div>
+                    <div id="type-diagram" class="flex items-center justify-center bg-slate-50 rounded-lg p-8 min-h-[250px]">
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="tradeoffs" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">A Balança do NoSQL: Prós e Contras em Detalhe</h2>
+                 <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    Compreender as vantagens e desvantagens do NoSQL é fundamental para tomar decisões arquiteturais informadas. Embora ofereça ganhos significativos em performance e escalabilidade para cenários específicos, é importante reconhecer seus compromissos, especialmente em relação à consistência de dados e à padronização, aspectos onde os bancos SQL tradicionalmente brilham.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-green-50 border border-green-200 rounded-xl p-6">
+                    <h3 class="text-2xl font-bold text-green-800 mb-4">✅ Vantagens</h3>
+                    <ul class="space-y-4">
+                        <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-green-700">Escalabilidade Horizontal:</strong> Permite expandir a capacidade de armazenamento e processamento adicionando mais servidores baratos (commodity hardware) a um cluster, em vez de investir em máquinas mais potentes e caras. Ideal para crescer de forma elástica e econômica.
+                        </li>
+                        <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-green-700">Flexibilidade de Esquema:</strong> Ao contrário dos bancos SQL que exigem um esquema fixo, os bancos NoSQL permitem que os dados sejam armazenados sem uma estrutura predefinida (schema-less ou schema-flexible). Isso agiliza o desenvolvimento e a evolução da aplicação, especialmente em ambientes ágeis.
+                        </li>
+                        <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-green-700">Alta Performance:</strong> Devido aos seus modelos de dados simplificados e otimizações internas (por exemplo, evitando joins complexos), muitos bancos NoSQL são capazes de atingir altíssimas taxas de leitura e escrita com baixa latência, essenciais para aplicações de alto tráfego.
+                        </li>
+                         <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-green-700">Alta Disponibilidade:</strong> A maioria dos sistemas NoSQL é projetada com arquiteturas distribuídas que incluem replicação de dados e mecanismos de sharding, garantindo que o sistema permaneça operacional mesmo em caso de falhas de nós individuais.
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                    <h3 class="text-2xl font-bold text-red-800 mb-4">❌ Desvantagens</h3>
+                     <ul class="space-y-4">
+                        <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-red-700">Consistência Eventual (CAP Theorem):</strong> Muitos bancos NoSQL priorizam a disponibilidade e a tolerância a partição (conforme o Teorema CAP), optando por uma consistência "eventual", onde os dados podem não estar totalmente atualizados em todos os nós imediatamente após uma escrita. Isso pode não ser adequado para aplicações que exigem consistência transacional forte (ACID), como sistemas bancários.
+                        </li>
+                        <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-red-700">Curva de Aprendizagem:</strong> Migrar de um mindset relacional para um modelo de dados NoSQL exige uma nova forma de projetar e interagir com os dados, o que pode representar uma curva de aprendizado para desenvolvedores e DBAs acostumados com SQL.
+                        </li>
+                        <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-red-700">Falta de Padronização:</strong> Diferentemente do SQL, que é uma linguagem de consulta padrão, cada banco de dados NoSQL possui sua própria API e linguagem de consulta (ex: MQL para MongoDB, CQL para Cassandra), o que pode dificultar a migração entre diferentes sistemas NoSQL e aumentar a dependência de um fornecedor.
+                        </li>
+                         <li class="content-card bg-white p-4 rounded-lg shadow-sm">
+                            <strong class="text-red-700">Ecossistema Menos Maduro:</strong> Embora em rápido crescimento, o ecossistema de ferramentas de administração, análise e integração (BI, ORMs) para NoSQL pode ser menos abrangente e maduro do que o disponível para bancos de dados relacionais.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">SQL vs NoSQL: A Diferença Fundamental na Prática</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    A distinção mais crucial entre SQL (Relacionais) e NoSQL reside em suas filosofias de escalabilidade e modelagem de dados. Enquanto bancos SQL escalam verticalmente (melhorando um único servidor), bancos NoSQL escalam horizontalmente (distribuindo a carga por múltiplos servidores). Isso se traduz em diferentes cenários de aplicação:
+                    <br><br>
+                    Para um sistema de gestão de pedidos financeiros, onde a integridade transacional é máxima e o esquema é bem definido, um banco SQL é ideal. Já para uma rede social com bilhões de usuários e um fluxo constante de novos dados não estruturados, um banco NoSQL é a escolha mais adequada para lidar com a escala e a flexibilidade exigidas. O gráfico abaixo ilustra visualmente o impacto do crescimento em termos de custo e capacidade para cada abordagem.
+                </p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <h3 class="text-xl font-bold text-center mb-6">Visualização de Escalabilidade: Custo vs Capacidade</h3>
+                <div class="chart-container">
+                    <canvas id="scalabilityChart"></canvas>
+                </div>
+                <p class="text-sm text-center text-slate-500 mt-4">
+                    <em>Fonte: Dados ilustrativos baseados em observações gerais da indústria e tendências de escalabilidade de bancos de dados.</em>
+                </p>
+            </div>
+        </section>
+
+        <section id="future" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">O Futuro do NoSQL: Tendências e Evolução</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    O NoSQL não é uma tecnologia estática; ele continua a evoluir e se adaptar às crescentes demandas do cenário digital. A adoção por grandes empresas e startups impulsiona o desenvolvimento de novas funcionalidades e abordagens. Prepare-se para as principais direções que estão moldando o futuro do gerenciamento de dados com NoSQL.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="content-card bg-white rounded-xl p-6 shadow-sm text-center">
+                    <div class="text-4xl mb-3">📈</div>
+                    <h3 class="font-bold text-lg mb-2">Adoção Crescente e Domínio do Mercado</h3>
+                    <p class="text-slate-600 text-sm">Empresas como Netflix, Amazon e Adobe utilizam amplamente NoSQL para lidar com volumes de dados massivos e requisitos de performance. A tendência é de crescimento contínuo, com mais empresas migrando para modernizar suas arquiteturas de dados.</p>
+                </div>
+                <div class="content-card bg-white rounded-xl p-6 shadow-sm text-center">
+                    <div class="text-4xl mb-3">🧩</div>
+                    <h3 class="font-bold text-lg mb-2">Bancos Multi-Modelo se Consolidam</h3>
+                    <p class="text-slate-600 text-sm">A capacidade de suportar múltiplos modelos de dados (documento, grafo, chave-valor, etc.) em um único sistema (ex: ArangoDB, Couchbase) permite aos desenvolvedores escolher o modelo mais adequado para cada parte de sua aplicação, simplificando a gestão e reduzindo a complexidade da arquitetura.</p>
+                </div>
+                <div class="content-card bg-white rounded-xl p-6 shadow-sm text-center">
+                    <div class="text-4xl mb-3">☁️</div>
+                    <h3 class="font-bold text-lg mb-2">DBaaS (Database-as-a-Service) na Nuvem</h3>
+                    <p class="text-slate-600 text-sm">Serviços gerenciados na nuvem como Amazon DynamoDB, Azure Cosmos DB, Google Cloud Firestore e MongoDB Atlas simplificam drasticamente a operação, escalabilidade e manutenção de bancos NoSQL, permitindo que as equipes se concentrem no desenvolvimento de aplicações e não na infraestrutura.</p>
+                </div>
+                 <div class="content-card bg-white rounded-xl p-6 shadow-sm text-center">
+                    <div class="text-4xl mb-3">엣</div>
+                    <h3 class="font-bold text-lg mb-2">NoSQL no Edge Computing</h3>
+                    <p class="text-slate-600 text-sm">Com o crescimento da IoT e de dispositivos inteligentes, a flexibilidade e a capacidade de lidar com dados desconectados ou com latência limitada tornam o NoSQL uma escolha ideal para armazenar e sincronizar dados em dispositivos de borda, próximo à fonte de dados.</p>
+                </div>
+                 <div class="content-card bg-white rounded-xl p-6 shadow-sm text-center">
+                    <div class="text-4xl mb-3">⚡️</div>
+                    <h3 class="font-bold text-lg mb-2">Integração Aprofundada com Serverless</h3>
+                    <p class="text-slate-600 text-sm">A combinação de bancos de dados NoSQL (que escalam sob demanda) com funções serverless (como AWS Lambda ou Azure Functions) permite a criação de arquiteturas altamente escaláveis, resilientes e econômicas, onde você paga apenas pelo uso real dos recursos.</p>
+                </div>
+                 <div class="content-card bg-white rounded-xl p-6 shadow-sm text-center">
+                    <div class="text-4xl mb-3">🤝</div>
+                    <h3 class="font-bold text-lg mb-2">Modelos de Consistência Mais Fortes</h3>
+                    <p class="text-slate-600 text-sm">Embora a consistência eventual seja uma característica de muitos NoSQLs, o avanço tecnológico está permitindo que alguns bancos de dados ofereçam modelos de consistência mais fortes (como consistência de leitura após escrita) sem sacrificar drasticamente a disponibilidade ou a escalabilidade.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="references" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900">Referências e Leituras Adicionais</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    Para aprofundar seu conhecimento sobre NoSQL, recomendamos as seguintes fontes e pesquisas relevantes:
+                </p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12">
+                <ul class="space-y-4 text-slate-700">
+                    <li>
+                        <p><strong>Cattell, R. (2011).</strong> "Scalable SQL and NoSQL Data Stores." <em>ACM SIGMOD Record</em>, 40(4), 12-27. DOI: 10.1145/2097716.2097723</p>
+                        <p class="text-sm text-slate-600"><em>Uma visão geral influente que compara as abordagens SQL e NoSQL em termos de escalabilidade e performance.</em></p>
+                    </li>
+                    <li>
+                        <p><strong>Sadalage, M., & Fowler, M. (2012).</strong> <em>NoSQL Distilled: A Brief Guide to the Emerging World of Polyglot Persistence.</em> Addison-Wesley Professional.</p>
+                        <p class="text-sm text-slate-600"><em>Um guia conciso e fundamental para entender os conceitos e a aplicação prática dos bancos de dados NoSQL e a persistência poliglota.</em></p>
+                    </li>
+                    <li>
+                        <p><strong>Brewer, E. A. (2000).</strong> "Towards Robust Distributed Systems (Keynote Address)." <em>Proceedings of the Nineteenth Annual ACM Symposium on Principles of Distributed Computing (PODC '00)</em>. ACM, New York, NY, USA, 7-10.</p>
+                        <p class="text-sm text-slate-600"><em>Apresentação seminal que introduziu o Teorema CAP (Consistência, Disponibilidade e Tolerância a Partição), um pilar teórico para a compreensão dos trade-offs em sistemas distribuídos.</em></p>
+                    </li>
+                    <li>
+                        <p><strong>Database of Databases (DB-Engines Ranking).</strong> Disponível em: <a href="https://db-engines.com/en/ranking" target="_blank" class="text-indigo-600 hover:underline">https://db-engines.com/en/ranking</a></p>
+                        <p class="text-sm text-slate-600"><em>Um recurso valioso para acompanhar a popularidade e as tendências de diferentes tipos de bancos de dados, incluindo uma vasta gama de opções NoSQL.</em></p>
+                    </li>
+                    <li>
+                        <p><strong>Artigos e Documentação Oficial de Bancos de Dados Específicos:</strong> Para detalhes técnicos aprofundados sobre cada tipo de NoSQL (ex: Documentação do MongoDB, Apache Cassandra, Redis, Neo4j).</p>
+                        <p class="text-sm text-slate-600"><em>As próprias fontes dos projetos e empresas por trás dos bancos de dados são ricas em informações detalhadas e guias de uso.</em></p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="bg-slate-800 text-white mt-24">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2025 Explorador Interativo NoSQL. Todos os direitos reservados.</p>
+            <p class="mt-2">As informações apresentadas são compiladas e sintetizadas a partir de diversas fontes da indústria de bancos de dados e melhores práticas, visando precisão e clareza para fins educacionais. As referências para aprofundamento estão disponíveis na seção "Referências e Leituras Adicionais".</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const typesData = {
+                'key-value': {
+                    title: 'Bancos de Chave-Valor (Key-Value Stores)',
+                    concept: 'Este é o modelo mais simples e fundamental de banco de dados NoSQL. Ele armazena dados como uma coleção de pares chave-valor, onde cada chave é única e serve como um identificador para recuperar um valor. O valor em si pode ser qualquer coisa: uma string, um número, um objeto JSON, ou até mesmo um binário, sem nenhuma estrutura interna imposta pelo banco de dados.',
+                    features: [
+                        '<li><span class="font-semibold">Simplicidade Extrema:</span> Seu modelo de dados é direto e fácil de entender, otimizando o acesso direto a dados.</li>',
+                        '<li><span class="font-semibold">Altíssima Velocidade:</span> Oferece operações de leitura e escrita incrivelmente rápidas, pois o acesso aos dados é feito diretamente pela chave, sem a necessidade de consultas complexas ou joins.</li>',
+                        '<li><span class="font-semibold">Escalabilidade Massiva:</span> Facilmente distribuível entre múltiplos servidores (escalabilidade horizontal), permitindo lidar com volumes de dados e tráfego extremamente altos.</li>',
+                        '<li><span class="font-semibold">Alta Disponibilidade:</span> Comumente implementado com replicação para garantir que os dados estejam sempre acessíveis, mesmo em caso de falha de um nó.</li>'
+                    ],
+                    usecases: 'Ideal para caching de dados (onde a velocidade é primordial para reduzir a carga sobre bancos primários), gerenciamento de sessões de usuário em aplicações web (armazenando dados como status de login e preferências), perfis de usuário simples, e carrinhos de compras em tempo real devido à sua baixa latência.',
+                    examples: 'Redis (amplamente usado para caching e filas de mensagens), Amazon DynamoDB (banco de dados chave-valor e documento para aplicações em escala da Amazon), Riak (focado em alta disponibilidade e tolerância a falhas).',
+                    diagram: `
+                        <div class="text-center font-mono">
+                            <div class="bg-indigo-100 text-indigo-800 p-4 rounded-lg inline-block shadow-md">"user:123"</div>
+                            <div class="text-2xl my-4 text-slate-400">&rarr;</div>
+                            <div class="bg-slate-200 text-slate-800 p-4 rounded-lg inline-block shadow-md w-64 text-left text-sm">
+                                { <br>
+                                &nbsp;&nbsp;"name": "Ana Silva", <br>
+                                &nbsp;&nbsp;"email": "ana.s@example.com", <br>
+                                &nbsp;&nbsp;"status": "online" <br>
+                                }
+                            </div>
+                            <p class="mt-4 text-slate-500 text-sm">Uma chave única ('user:123') aponta para um valor (um objeto JSON detalhado).</p>
+                        </div>
+                    `
+                },
+                'document': {
+                    title: 'Bancos de Documentos (Document Stores)',
+                    concept: 'Este tipo de banco de dados armazena dados em documentos semi-estruturados, geralmente no formato JSON (JavaScript Object Notation), BSON (JSON binário otimizado) ou XML. Cada "documento" é uma unidade autônoma que encapsula todos os dados de uma entidade, permitindo estruturas de dados ricas e aninhadas.',
+                    features: [
+                        '<li><span class="font-semibold">Flexibilidade de Esquema:</span> Permite que os documentos dentro de uma coleção tenham estruturas diferentes. Você não precisa definir um esquema fixo antecipadamente, facilitando a adaptação a requisitos de dados em constante mudança.</li>',
+                        '<li><span class="font-semibold">Consultas Ricas e Complexas:</span> Oferece linguagens de consulta poderosas (como a MongoDB Query Language - MQL) que permitem buscar, filtrar e agregar dados com base em campos aninhados dentro dos documentos.</li>',
+                        '<li><span class="font-semibold">Intuitivo para Desenvolvedores:</span> O modelo de documento JSON/BSON mapeia naturalmente para objetos em linguagens de programação modernas, tornando o desenvolvimento mais ágil e a interação com o banco de dados mais direta.</li>',
+                        '<li><span class="font-semibold">Escalabilidade Horizontal:</span> Suporta sharding, distribuindo documentos por múltiplos servidores para alta performance e capacidade.</li>'
+                    ],
+                    usecases: 'Amplamente utilizado para catálogos de produtos (onde cada produto pode ter atributos variáveis), sistemas de gerenciamento de conteúdo (CMS) como blogs e wikis, perfis de usuário em redes sociais (onde o perfil pode ter dados mutáveis e complexos), e backends para aplicativos móveis e web que exigem agilidade no desenvolvimento e manipulação de dados flexíveis.',
+                    examples: 'MongoDB (o mais popular, usado por empresas como Adobe e The New York Times), Couchbase (focado em performance e consistência com D-A-S, Data-Access-Storage), RavenDB (banco de documentos para .NET).',
+                    diagram: `
+                        <div class="text-center font-mono">
+                           <div class="bg-slate-200 text-slate-800 p-4 rounded-lg shadow-md w-80 text-left text-sm">
+                                _id: "prod_eletr_001",<br>
+                                name: "Smartphone X",<br>
+                                brand: "TechCo",<br>
+                                specs: {<br>
+                                &nbsp;&nbsp;screen: "6.1 OLED",<br>
+                                &nbsp;&nbsp;camera: "48MP"<br>
+                                },<br>
+                                reviews: [<br>
+                                &nbsp;&nbsp;{ user: "joao", rating: 5, comment: "Excelente!" },<br>
+                                &nbsp;&nbsp;{ user: "maria", rating: 4, comment: "Boa bateria." }<br>
+                                ]
+                           </div>
+                           <p class="mt-4 text-slate-500 text-sm">Um documento autocontido com dados aninhados para um produto.</p>
+                        </div>
+                    `
+                },
+                'column-family': {
+                    title: 'Bancos Colunares (Column-Family Stores)',
+                    concept: 'Ao contrário dos bancos de dados tradicionais que armazenam dados em linhas, os bancos colunares organizam os dados em "famílias de colunas". Isso os torna extremamente eficientes para cargas de trabalho de escrita intensiva e para consultar grandes volumes de dados esparsos (onde muitas células em uma "linha" estariam vazias em um modelo relacional). Cada linha é identificada por uma "chave de linha" e pode ter um número variável de colunas.',
+                    features: [
+                        '<li><span class="font-semibold">Escrita e Leitura Otimizadas:</span> Altamente eficientes para cenários de Big Data com grandes volumes de inserções e atualizações, bem como para leituras de fatias específicas de dados.</li>',
+                        '<li><span class="font-semibold">Massivamente Escalável:</span> Projetado desde o início para operar em clusters distribuídos de centenas de nós, permitindo escalabilidade horizontal linear para petabytes de dados e milhões de operações por segundo.</li>',
+                        '<li><span class="font-semibold">Ideal para Dados Esparsos:</span> Armazena apenas as colunas que possuem dados, economizando espaço e otimizando o desempenho para conjuntos de dados onde as entidades podem ter atributos muito variados.</li>',
+                        '<li><span class="font-semibold">Alta Disponibilidade e Tolerância a Falhas:</span> Construído para ser sempre ativo, com replicação de dados distribuída automaticamente pelo cluster.</li>'
+                    ],
+                    usecases: 'Perfeito para plataformas de Internet das Coisas (IoT) que coletam grandes volumes de dados de sensores, sistemas de mensagens em tempo real (como aplicativos de chat), análise de logs e telemetria (armazenando dados de eventos para auditoria e análise), e qualquer aplicação de Big Data que exija alta taxa de ingestão e acesso a dados históricos.',
+                    examples: 'Apache Cassandra (utilizado por empresas como Netflix para seu serviço de streaming e Facebook para sua caixa de entrada de mensagens), Apache HBase (sistema de gerenciamento de banco de dados distribuído para dados esparsos em larga escala, construído sobre o HDFS do Hadoop), Google Bigtable (o banco de dados colunar da Google que suporta muitos de seus serviços, como Google Search e Google Maps).',
+                    diagram: `
+                        <div class="text-center font-mono">
+                           <div class="bg-slate-200 text-slate-800 p-4 rounded-lg shadow-md w-full max-w-sm text-left text-sm">
+                                <strong>Row Key: "sensor_temp_001"</strong><br><br>
+                                <span class="text-indigo-700 font-semibold">temperatura_dia:</span> {<br>
+                                &nbsp;&nbsp;"2025-06-23_08h": "25.5°C",<br>
+                                &nbsp;&nbsp;"2025-06-23_09h": "26.1°C"<br>
+                                }<br><br>
+                                <span class="text-indigo-700 font-semibold">umidade_dia:</span> {<br>
+                                &nbsp;&nbsp;"2025-06-23_08h": "60%",<br>
+                                &nbsp;&nbsp;"2025-06-23_09h": "58%"<br>
+                                }
+                           </div>
+                           <p class="mt-4 text-slate-500 text-sm">Dados de séries temporais organizados por família de colunas para um sensor.</p>
+                        </div>
+                    `
+                },
+                'graph': {
+                    title: 'Bancos de Grafos (Graph Databases)',
+                    concept: 'Projetados especificamente para modelar e persistir dados como nós (entidades) e arestas (relacionamentos entre entidades), juntamente com propriedades para ambos. Esta estrutura natural torna a exploração de conexões e o cálculo de caminhos entre entidades incrivelmente eficientes, superando em muito a complexidade dos joins em bancos relacionais para dados altamente interconectados.',
+                    features: [
+                        '<li><span class="font-semibold">Foco em Relacionamentos:</span> Sua arquitetura é otimizada para armazenar e navegar em conexões complexas, não apenas em dados isolados.</li>',
+                        '<li><span class="font-semibold">Consultas Rápidas de Conexão:</span> A execução de travessias de grafos (encontrar caminhos, padrões) é exponencialmente mais rápida do que tentar simular relacionamentos complexos com múltiplas operações de join em bancos SQL.</li>',
+                        '<li><span class="font-semibold">Modelagem Intuitiva:</span> O modelo de grafo é muito natural para representar redes do mundo real (redes sociais, transportes, organizações), tornando o design de bancos de dados e a compreensão dos dados mais fácil.</li>',
+                        '<li><span class="font-semibold">Descoberta de Padrões:</span> Facilita a identificação de padrões e insights ocultos em dados conectados.</li>'
+                    ],
+                    usecases: 'Essencial para redes sociais (mapear amizades, curtidas, grupos), sistemas de recomendação (sugerir produtos ou filmes baseados em conexões de gosto e comportamento), detecção de fraudes (identificar padrões de transações ou conexões suspeitas), gerenciamento de identidade e acesso (mapear permissões e relacionamentos entre usuários e recursos), e roteamento logístico e otimização de redes.',
+                    examples: 'Neo4j (líder de mercado em bancos de grafos, usado por empresas como Walmart e NASA), ArangoDB (banco de dados multi-modelo que inclui capacidades de grafo, documento e chave-valor), Amazon Neptune (serviço de banco de dados de grafo totalmente gerenciado da AWS).',
+                    diagram: `
+                        <div class="flex items-center justify-center space-x-2 font-mono">
+                            <div class="bg-indigo-200 p-3 rounded-full shadow">(Usuário: Ana)</div>
+                            <div class="text-slate-500 text-sm text-center">-[:AMIGO_DE]-><br>-[:AMIGO_DE]-</div>
+                            <div class="bg-green-200 p-3 rounded-full shadow">(Usuário: Bruno)</div>
+                            <div class="text-slate-500 text-sm text-center">-[:COMPROU]-></div>
+                            <div class="bg-orange-200 p-3 rounded-full shadow">{Produto: Livro X}</div>
+                        </div>
+                        <p class="mt-4 text-slate-500 text-sm text-center">Nós (Ana, Bruno, Livro X) e Arestas (AMIGO_DE, COMPROU) ilustrando relacionamentos.</p>
+                    `
+                }
+            };
+
+            const typeButtons = document.querySelectorAll('.type-button');
+            const titleEl = document.getElementById('type-title');
+            const conceptEl = document.getElementById('type-concept');
+            const featuresEl = document.getElementById('type-features');
+            const usecasesEl = document.getElementById('type-usecases');
+            const examplesEl = document.getElementById('type-examples');
+            const diagramEl = document.getElementById('type-diagram');
+            
+            function updateTypeContent(type) {
+                const data = typesData[type];
+                titleEl.textContent = data.title;
+                conceptEl.textContent = data.concept;
+                featuresEl.innerHTML = data.features.join('');
+                usecasesEl.textContent = data.usecases;
+                examplesEl.textContent = data.examples;
+                diagramEl.innerHTML = data.diagram;
+                
+                typeButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.type === type) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            typeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    updateTypeContent(button.dataset.type);
+                });
+            });
+
+            updateTypeContent('key-value');
+
+            const ctx = document.getElementById('scalabilityChart').getContext('2d');
+            const scalabilityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Passo 1 (Pequeno)', 'Passo 2 (Médio)', 'Passo 3 (Grande)', 'Passo 4 (Massivo)'],
+                    datasets: [{
+                        label: 'Capacidade SQL (Escala Vertical)',
+                        data: [100, 150, 200, 250],
+                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1,
+                        stack: 'stack 0'
+                    }, {
+                        label: 'Custo Adicional (SQL)',
+                        data: [50, 100, 180, 300],
+                        backgroundColor: 'rgba(153, 27, 27, 0.7)',
+                        borderColor: 'rgba(153, 27, 27, 1)',
+                        borderWidth: 1,
+                        stack: 'stack 0'
+                    }, {
+                        label: 'Capacidade NoSQL (Escala Horizontal)',
+                        data: [100, 200, 400, 800],
+                        backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1,
+                        stack: 'stack 1'
+                    }, {
+                        label: 'Custo Adicional (NoSQL)',
+                        data: [20, 40, 60, 80],
+                        backgroundColor: 'rgba(21, 128, 61, 0.7)',
+                        borderColor: 'rgba(21, 128, 61, 1)',
+                        borderWidth: 1,
+                        stack: 'stack 1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false,
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return 'Cenário de Escalonamento: ' + tooltipItems[0].label;
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        if(label.includes('Custo')) {
+                                            label += `R$ ${context.parsed.y} (Relativo)`;
+                                        } else {
+                                             label += `${context.parsed.y} Unidades (Relativo)`;
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tamanho da Aplicação'
+                            },
+                            stacked: true,
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Capacidade / Custo Relativo'
+                            },
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    },
+                }
+            });
+            
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', (e) => {
+                window.location.hash = e.target.value;
+            });
+
+        });
+    </script>
+</body>
+</html>
